@@ -11,6 +11,7 @@
 @interface MasterViewController : UITableViewController
 
 - (NSString *) md5:(NSString *) input;
+- (NSData *) loadImage:(NSString *) url;
 
 @end
 

@@ -31,6 +31,33 @@
     return  output;
 }
 
+- (NSData *) loadImage:(NSString *)url
+{
+    //Calculate md5 value from image URL
+    NSString *hash = [self md5:url];
+    NSString *imageFile = [self.dataPath stringByAppendingPathComponent:[NSString stringWithFormat:@"/%@", hash]];
+    NSData *data;
+    if (![[NSFileManager defaultManager] fileExistsAtPath:imageFile]) {
+        NSURL *aURL = [NSURL URLWithString:url];
+        data = [NSData dataWithContentsOfURL:aURL];
+        //Check if image was loaded
+        if (data == nil) {
+            //If not show "no image awailable" icon
+            //Call same function again so that it gets cached
+            data = [self loadImage:@"https://s3-eu-west-1.amazonaws.com/backup.red-mamba.com/image-not-available.png"];
+        }
+        //Save it to cache, but only if we have valid image
+        if (data != nil) {
+            [data writeToFile:imageFile atomically:TRUE];
+        }
+    } else {
+        //Load it from cache
+        data = [NSData dataWithContentsOfFile:imageFile];
+    }
+    
+    return  data;
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     
@@ -61,23 +88,11 @@
     NSDictionary *object = self.objects[indexPath.row];
     cell.titleLabel.text = object[@"title"];
     cell.descriptionLabel.text = object[@"desc"];
- 
-    //Calculate md5 value from image URL
-    NSString *hash = [self md5:object[@"image"]];
-    NSString *imageFile = [self.dataPath stringByAppendingPathComponent:[NSString stringWithFormat:@"/%@", hash]];
-    NSData *data;
-    if (![[NSFileManager defaultManager] fileExistsAtPath:imageFile]) {
-        NSURL *aURL = [NSURL URLWithString:object[@"image"]];
-        data = [NSData dataWithContentsOfURL:aURL];
-        //First time loaded so save it to cache
-        [data writeToFile:imageFile atomically:TRUE];
-    } else {
-        //Load it from cache
-        data = [NSData dataWithContentsOfFile:imageFile];
-    }
     
-    //Pass the image to the cell
+    NSData *data = [self loadImage:object[@"image"]];
+    //Load data to UIImage
     UIImage *image = [UIImage imageWithData:data];
+    //Pass the image to the cell
     [cell.cakeImageView setImage:image];
     
     return cell;
@@ -88,9 +103,7 @@
 }
 
 - (void)getData{
-    
-    NSURL *url = [NSURL URLWithString:@"https://gist.githubusercontent.com/hart88/198f29ec5114a3ec3460/raw/8dd19a88f9b8d24c23d9960f3300d0c917a4f07c/cake.json"];
-    
+    NSURL *url = [NSURL URLWithString:@"https://s3-eu-west-1.amazonaws.com/backup.red-mamba.com/cake.json"];
     NSData *data = [NSData dataWithContentsOfURL:url];
     
     NSError *jsonError;
