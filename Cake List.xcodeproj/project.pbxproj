@@ -438,6 +438,7 @@
 				DBF17A391B0B648F004E6311 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		DBF17A3A1B0B648F004E6311 /* Build configuration list for PBXNativeTarget "Cake ListTests" */ = {
 			isa = XCConfigurationList;
@@ -446,6 +447,7 @@
 				DBF17A3C1B0B648F004E6311 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

@@ -10,6 +10,7 @@
 
 @interface MasterViewController : UITableViewController
 
+- (NSString *) md5:(NSString *) input;
 
 @end
 

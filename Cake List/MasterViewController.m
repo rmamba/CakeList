@@ -8,15 +8,41 @@
 
 #import "MasterViewController.h"
 #import "CakeCell.h"
+#import <CommonCrypto/CommonDigest.h>
 
 @interface MasterViewController ()
 @property (strong, nonatomic) NSArray *objects;
+@property (strong, nonatomic) NSString *dataPath;
 @end
 
 @implementation MasterViewController
 
+- (NSString *) md5:(NSString *) input
+{
+    const char *cStr = [input UTF8String];
+    unsigned char digest[CC_MD5_DIGEST_LENGTH];
+    CC_MD5( cStr, strlen(cStr), digest ); // This is the md5 call
+    
+    NSMutableString *output = [NSMutableString stringWithCapacity:CC_MD5_DIGEST_LENGTH * 2];
+    
+    for(int i = 0; i < CC_MD5_DIGEST_LENGTH; i++)
+        [output appendFormat:@"%02x", digest[i]];
+    
+    return  output;
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    //Create temp folder
+    NSError *error;
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsDirectory = [paths objectAtIndex:0]; // Get documents folder
+    self.dataPath = [documentsDirectory stringByAppendingPathComponent:@"/CakeList"];
+    
+    if (![[NSFileManager defaultManager] fileExistsAtPath:self.dataPath])
+        [[NSFileManager defaultManager] createDirectoryAtPath:self.dataPath withIntermediateDirectories:NO attributes:nil error:&error]; //Create folder
+    
     [self getData];
 }
 
@@ -36,9 +62,21 @@
     cell.titleLabel.text = object[@"title"];
     cell.descriptionLabel.text = object[@"desc"];
  
+    //Calculate md5 value from image URL
+    NSString *hash = [self md5:object[@"image"]];
+    NSString *imageFile = [self.dataPath stringByAppendingPathComponent:[NSString stringWithFormat:@"/%@", hash]];
+    NSData *data;
+    if (![[NSFileManager defaultManager] fileExistsAtPath:imageFile]) {
+        NSURL *aURL = [NSURL URLWithString:object[@"image"]];
+        data = [NSData dataWithContentsOfURL:aURL];
+        //First time loaded so save it to cache
+        [data writeToFile:imageFile atomically:TRUE];
+    } else {
+        //Load it from cache
+        data = [NSData dataWithContentsOfFile:imageFile];
+    }
     
-    NSURL *aURL = [NSURL URLWithString:object[@"image"]];
-    NSData *data = [NSData dataWithContentsOfURL:aURL];
+    //Pass the image to the cell
     UIImage *image = [UIImage imageWithData:data];
     [cell.cakeImageView setImage:image];
     
